@@ -58,5 +58,17 @@ namespace UrlShortener.CodeGenerator.Benchmarks
             return string.Concat(Enumerable.Repeat(AllowedChars, CodeLength)
                 .Select(s => s.ElementAt(RandomNumberGenerator.GetInt32(0, s.Length))).ToArray());
         }
+
+        [Benchmark]
+        public string GenerateWithRandom_CharsLoop()
+        {
+            var chars = new char[CodeLength];
+            for (int i = 0; i < CodeLength; i++)
+            {
+                chars[i] = AllowedChars[Random.Next(AllowedChars.Length)];
+            }
+            return new string(chars);
+        }
+
     }
 }

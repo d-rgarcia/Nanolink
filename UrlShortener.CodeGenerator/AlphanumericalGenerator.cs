@@ -7,7 +7,7 @@ public class AlphanumericalGenerator : ICodeGenerator
     private const string ALLOWED_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private const int MIN_LENGTH = 5;
 
-    private static readonly RandomNumberGenerator random = RandomNumberGenerator.Create();
+    private static readonly Random random = new Random();
     
     private readonly int length;
 
@@ -21,9 +21,11 @@ public class AlphanumericalGenerator : ICodeGenerator
 
     public string GenerateCode()
     {
-        int allowedCharsLenght = ALLOWED_CHARS.Length;
-
-        return string.Concat(Enumerable.Repeat(ALLOWED_CHARS, length)
-            .Select(c => c.ElementAt(RandomNumberGenerator.GetInt32(0, allowedCharsLenght))));
+        var chars = new char[length];
+        for (int i = 0; i < length; i++)
+        {
+            chars[i] = ALLOWED_CHARS[random.Next(ALLOWED_CHARS.Length)];
+        }
+        return new string(chars);
     }
 }
