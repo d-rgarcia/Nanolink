@@ -24,9 +24,9 @@ public interface IUrlStore
     /// <summary>
     /// Gets the URL data for the given short URL.
     /// </summary>
-    /// <param name="shortUrl">The short URL.</param>
+    /// <param name="shortUrlCode">The short URL code.</param>
     /// <returns>The URL data.</returns>
-    Task<UrlData?> GetByShortUrlAsync(Uri shortUrl);
+    Task<UrlData?> GetByShortUrlAsync(string shortUrlCode);
 
     /// <summary>
     /// Tries to add a new URL to the store.

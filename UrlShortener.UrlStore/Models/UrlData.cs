@@ -16,9 +16,9 @@ public class UrlData
     public required Uri LongUrl { get; set; }
 
     /// <summary>
-    /// The short URL that is used to access the long URL.
+    /// The short URL code that is used to access the long URL.
     /// </summary>
-    public required Uri ShortUrl { get; set; }
+    public required string ShortUrlCode { get; set; }
 
     /// <summary>
     /// The date and time UTC the URL was created.

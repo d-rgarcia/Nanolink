@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace UrlShortener.CodeGenerator.Tests
 {
     public class CodeGeneratorTests

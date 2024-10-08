@@ -28,16 +28,11 @@ public class UrlStoreContext : DbContext, IUrlStore
         {
             builder.HasKey(url => url.Id);
 
-            builder.HasIndex(url => url.ShortUrl).IsUnique();
+            builder.HasIndex(url => url.ShortUrlCode).IsUnique();
             builder.HasIndex(url => url.LongUrl).IsUnique();
 
+            builder.Property(url => url.ShortUrlCode).IsRequired();
             builder.Property(url => url.LongUrl)
-            .IsRequired()
-            .HasConversion(
-                uri => uri.ToString(),
-                str => new Uri(str)
-            );
-            builder.Property(url => url.ShortUrl)
             .IsRequired()
             .HasConversion(
                 uri => uri.ToString(),
@@ -73,14 +68,14 @@ public class UrlStoreContext : DbContext, IUrlStore
     /// <summary>
     /// Get the URL data by short URL.
     /// </summary>
-    /// <param name="shortUrl">The short URL to get the data for.</param>
+    /// <param name="shortUrlCode">The short URL to get the data for.</param>
     /// <returns>The URL data.</returns>
-    public async Task<UrlData?> GetByShortUrlAsync(Uri shortUrl)
+    public async Task<UrlData?> GetByShortUrlAsync(string shortUrlCode)
     {
-        ArgumentNullException.ThrowIfNull(shortUrl);
+        ArgumentNullException.ThrowIfNull(shortUrlCode);
 
         return await ExecuteAsync(nameof(GetByShortUrlAsync), async () =>
-            await Urls.FirstOrDefaultAsync(url => url.ShortUrl == shortUrl));
+            await Urls.FirstOrDefaultAsync(url => url.ShortUrlCode == shortUrlCode));
     }
 
     /// <summary>
@@ -92,7 +87,7 @@ public class UrlStoreContext : DbContext, IUrlStore
     {
         ArgumentNullException.ThrowIfNull(urlData);
         ArgumentNullException.ThrowIfNull(urlData.LongUrl);
-        ArgumentNullException.ThrowIfNull(urlData.ShortUrl);
+        ArgumentNullException.ThrowIfNull(urlData.ShortUrlCode);
 
         return await ExecuteAsync(nameof(AddAsync), async () =>
         {
@@ -103,8 +98,8 @@ public class UrlStoreContext : DbContext, IUrlStore
                 return existingUrl.Id;
             }
 
-            if (await Urls.AnyAsync(url => url.ShortUrl == urlData.ShortUrl))
-                throw new DuplicateShortUrlException($"Short URL '{urlData.ShortUrl}' already exists");
+            if (await Urls.AnyAsync(url => url.ShortUrlCode == urlData.ShortUrlCode))
+                throw new DuplicateShortUrlException($"Short URL '{urlData.ShortUrlCode}' already exists");
 
             urlData.CreatedAt = DateTime.UtcNow;
 

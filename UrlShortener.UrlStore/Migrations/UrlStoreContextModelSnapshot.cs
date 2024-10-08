@@ -35,7 +35,7 @@ namespace UrlShortener.UrlStore.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ShortUrl")
+                    b.Property<string>("ShortUrlCode")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -44,7 +44,7 @@ namespace UrlShortener.UrlStore.Migrations
                     b.HasIndex("LongUrl")
                         .IsUnique();
 
-                    b.HasIndex("ShortUrl")
+                    b.HasIndex("ShortUrlCode")
                         .IsUnique();
 
                     b.ToTable("Urls");

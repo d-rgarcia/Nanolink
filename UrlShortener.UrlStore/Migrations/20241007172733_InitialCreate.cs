@@ -17,7 +17,7 @@ namespace UrlShortener.UrlStore.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     LongUrl = table.Column<string>(type: "text", nullable: false),
-                    ShortUrl = table.Column<string>(type: "text", nullable: false),
+                    ShortUrlCode = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -32,9 +32,9 @@ namespace UrlShortener.UrlStore.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Urls_ShortUrl",
+                name: "IX_Urls_ShortUrlCode",
                 table: "Urls",
-                column: "ShortUrl",
+                column: "ShortUrlCode",
                 unique: true);
         }
 

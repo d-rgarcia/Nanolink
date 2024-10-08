@@ -11,13 +11,13 @@ public class UrlStoreTest : UrlStoreTestBase
         var firstUrl = new UrlData
         {
             LongUrl = new Uri("https://www.google.com"),
-            ShortUrl = new Uri("https://short.url/abc123")
+            ShortUrlCode = "abc123"
         };
 
         var secondUrl = new UrlData
         {
             LongUrl = new Uri("https://www.google.com"),
-            ShortUrl = new Uri("https://short.url/def456")
+            ShortUrlCode = "def456"
         };
 
         using var urlStore = new UrlStoreContext(_contextOptions, _logger);
@@ -31,7 +31,7 @@ public class UrlStoreTest : UrlStoreTestBase
         Assert.Equal(result.Id, firstUrl.Id);
         Assert.Equal(result.Id, createdFirstId);
         Assert.Equal(result.Id, createdSecondId);
-        Assert.Equal(result.ShortUrl, firstUrl.ShortUrl);
+        Assert.Equal(result.ShortUrlCode, firstUrl.ShortUrlCode);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class UrlStoreTest : UrlStoreTestBase
         var url = new UrlData
         {
             LongUrl = new Uri("https://www.google.com"),
-            ShortUrl = new Uri("https://short.url/abc123")
+            ShortUrlCode = "abc123"
         };
 
         using var urlStore = new UrlStoreContext(_contextOptions, _logger);
@@ -50,7 +50,7 @@ public class UrlStoreTest : UrlStoreTestBase
         var result = await urlStore.GetAsync(url.Id);
 
         Assert.NotNull(result);
-        Assert.Equal(result.ShortUrl, url.ShortUrl);
+        Assert.Equal(result.ShortUrlCode, url.ShortUrlCode);
         Assert.Equal(result.LongUrl, url.LongUrl);
         Assert.Equal(result.Id, createdId);
 
@@ -67,18 +67,18 @@ public class UrlStoreTest : UrlStoreTestBase
         var url = new UrlData
         {
             LongUrl = new Uri("https://www.google.com"),
-            ShortUrl = new Uri("https://short.url/abc123")
+            ShortUrlCode = "abc123"
         };
 
         using var urlStore = new UrlStoreContext(_contextOptions, _logger);
 
         var createdId = await urlStore.AddAsync(url);
 
-        var result = await urlStore.GetByShortUrlAsync(url.ShortUrl);
+        var result = await urlStore.GetByShortUrlAsync(url.ShortUrlCode);
 
         Assert.NotNull(result);
         Assert.Equal(result.Id, createdId);
-        Assert.Equal(result.ShortUrl, url.ShortUrl);
+        Assert.Equal(result.ShortUrlCode, url.ShortUrlCode);
         Assert.Equal(result.LongUrl, url.LongUrl);
     }
 
@@ -88,7 +88,7 @@ public class UrlStoreTest : UrlStoreTestBase
         var url = new UrlData
         {
             LongUrl = new Uri("https://www.google.com"),
-            ShortUrl = new Uri("https://short.url/abc123")
+            ShortUrlCode = "abc123"
         };
 
         using var urlStore = new UrlStoreContext(_contextOptions, _logger);
@@ -98,7 +98,7 @@ public class UrlStoreTest : UrlStoreTestBase
         var secondUrl = new UrlData
         {
             LongUrl = new Uri("https://www.bing.com"),
-            ShortUrl = url.ShortUrl
+            ShortUrlCode = url.ShortUrlCode
         };
 
         await Assert.ThrowsAsync<DuplicateShortUrlException>(() => urlStore.AddAsync(secondUrl));

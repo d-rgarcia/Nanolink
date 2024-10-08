@@ -12,7 +12,7 @@ using UrlShortener.UrlStore;
 namespace UrlShortener.UrlStore.Migrations
 {
     [DbContext(typeof(UrlStoreContext))]
-    [Migration("20241006150924_InitialCreate")]
+    [Migration("20241007172733_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -38,7 +38,7 @@ namespace UrlShortener.UrlStore.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ShortUrl")
+                    b.Property<string>("ShortUrlCode")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -47,7 +47,7 @@ namespace UrlShortener.UrlStore.Migrations
                     b.HasIndex("LongUrl")
                         .IsUnique();
 
-                    b.HasIndex("ShortUrl")
+                    b.HasIndex("ShortUrlCode")
                         .IsUnique();
 
                     b.ToTable("Urls");
