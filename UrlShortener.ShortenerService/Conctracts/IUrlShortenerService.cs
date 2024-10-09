@@ -14,5 +14,12 @@ public interface IUrlShortenerService
     /// </summary>
     /// <param name="shortUrlCode"></param>
     /// <returns></returns>
-    Task<string> GetUrlAsync(string shortUrlCode);
+    Task<Uri?> GetUrlAsync(string shortUrlCode);
+
+    /// <summary>
+    /// Removes the URL from the store.
+    /// </summary>
+    /// <param name="shortUrlCode"></param>
+    /// <returns></returns>
+    Task<bool> RemoveUrlAsync(string shortUrlCode);
 }
