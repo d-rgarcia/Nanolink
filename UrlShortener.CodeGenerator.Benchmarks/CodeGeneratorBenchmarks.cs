@@ -13,7 +13,7 @@ namespace UrlShortener.CodeGenerator.Benchmarks
         private static readonly Random Random = new Random();
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
 
-        [Params(6, 10, 20)] // We'll test with different code lengths
+        [Params(6, 10, 20)]
         public int CodeLength { get; set; }
 
         [Benchmark]
@@ -69,6 +69,5 @@ namespace UrlShortener.CodeGenerator.Benchmarks
             }
             return new string(chars);
         }
-
     }
 }

@@ -11,7 +11,7 @@ public class UrlStoreContextFactory : IDesignTimeDbContextFactory<UrlStoreContex
     public UrlStoreContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<UrlStoreContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Database=my_db;Username=postgres;Password=Admin123");
+        optionsBuilder.UseNpgsql("Host=localhost;Database=UrlStoreDb;Username=postgres;Password=Admin123");
 
         var logger = new LoggerFactory().CreateLogger<UrlStoreContext>();
 

@@ -75,7 +75,18 @@ public class UrlStoreContext : DbContext, IUrlStore
         ArgumentNullException.ThrowIfNull(shortUrlCode);
 
         return await ExecuteAsync(nameof(GetByShortUrlAsync), async () =>
-            await Urls.FirstOrDefaultAsync(url => url.ShortUrlCode == shortUrlCode));
+        {
+            var url = await Urls.FirstOrDefaultAsync(url => url.ShortUrlCode == shortUrlCode);
+
+            if (url != null)
+            {
+                url.LastAccessedAt = DateTime.UtcNow;
+
+                await SaveChangesAsync();
+            }
+
+            return url;
+        });
     }
 
     /// <summary>

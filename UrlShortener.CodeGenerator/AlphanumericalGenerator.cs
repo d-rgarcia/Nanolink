@@ -1,26 +1,24 @@
-using System.Security.Cryptography;
+using Microsoft.Extensions.Options;
 
 namespace UrlShortener.CodeGenerator;
 
 public class AlphanumericalGenerator : ICodeGenerator
 {
     private const string ALLOWED_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    private const int MIN_LENGTH = 5;
-
+    private readonly IOptionsMonitor<CodeGeneratorOptions> options;
     private static readonly Random random = new Random();
-    
-    private readonly int length;
 
-    public AlphanumericalGenerator(int length)
+    public AlphanumericalGenerator(IOptionsMonitor<CodeGeneratorOptions> options)
     {
-        if (length < 5)
-            throw new ArgumentOutOfRangeException(nameof(MIN_LENGTH), $"Length must be at least {MIN_LENGTH}.");
-
-        this.length = length;
+        this.options = options;
     }
 
     public string GenerateCode()
     {
+        var length = options.CurrentValue.CodeLength;
+        if (length < options.CurrentValue.MinCodeLength)
+            throw new ArgumentOutOfRangeException($"Configuration error: code length cannot be less than {options.CurrentValue.MinCodeLength}");
+
         var chars = new char[length];
         for (int i = 0; i < length; i++)
         {

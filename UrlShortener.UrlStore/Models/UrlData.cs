@@ -4,7 +4,7 @@ namespace UrlShortener.UrlStore.Models;
 /// DTO about a URL that is stored in the URL store.
 /// </summary>
 public class UrlData
-{   
+{
     /// <summary>
     /// The ID of the URL.
     /// </summary>
@@ -24,4 +24,9 @@ public class UrlData
     /// The date and time UTC the URL was created.
     /// </summary>
     public DateTime CreatedAt { get; internal set; }
+
+    /// <summary>
+    /// The date and time UTC the URL was last accessed.
+    /// </summary>
+    public DateTime LastAccessedAt { get; internal set; }
 }
