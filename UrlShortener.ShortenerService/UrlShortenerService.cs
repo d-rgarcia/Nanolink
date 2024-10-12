@@ -17,7 +17,7 @@ public class UrlShortenerService : IUrlShortenerService
     private const int MaxRetryAttempts = 3;
     private const int RetryIntervalInMilliseconds = 500;
     private const string ShortUrlCodeCacheKeyPrefix = "shortUrlCode:";
-
+    private const string LongUrlCacheKeyPrefix = "longUrl:";
 
     private readonly IMemoryCache _cache;
     private readonly IUrlStore _urlStore;
@@ -55,6 +55,16 @@ public class UrlShortenerService : IUrlShortenerService
         if (!Uri.IsWellFormedUriString(longUrl, UriKind.Absolute))
             throw new ArgumentException("The given URL is not a valid absolute URL.", nameof(longUrl));
 
+        string cacheKey = $"{LongUrlCacheKeyPrefix}{longUrl}";
+
+        if (_cache.TryGetValue(cacheKey, out string? shortUrlCode))
+        {
+            _logger.LogDebug("Cache hit for long URL: {LongUrl}.", longUrl.ToString());
+
+            if (!string.IsNullOrEmpty(shortUrlCode))
+                return shortUrlCode;
+        }
+
         var urlData = await _urlStore.GetByLongUrlAsync(new Uri(longUrl));
 
         if (urlData == null)
@@ -75,9 +85,17 @@ public class UrlShortenerService : IUrlShortenerService
             });
         }
 
+        var cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(_options.CacheSlidingExpiration)
+            .SetAbsoluteExpiration(_options.CacheAbsoluteExpiration);
+
+        _cache.Set(cacheKey, urlData.ShortUrlCode, cacheEntryOptions);
+
+        _logger.LogDebug("Added to long URL cache: {LongUrl}", longUrl.ToString());
+
         return urlData.ShortUrlCode;
     }
-    
+
     /// <summary>
     /// Gets the original URL from the shortened URL code.
     /// </summary>
@@ -91,12 +109,12 @@ public class UrlShortenerService : IUrlShortenerService
 
         if (_cache.TryGetValue(cacheKey, out Uri? longUrl))
         {
-            _logger.LogInformation("Cache hit for short URL code: {ShortUrlCode}", shortUrlCode);
-            
+            _logger.LogDebug("Cache hit for short URL code: {ShortUrlCode}", shortUrlCode);
+
             return longUrl;
         }
 
-        _logger.LogInformation("Cache miss for short URL code: {ShortUrlCode}", shortUrlCode);
+        _logger.LogDebug("Cache miss for short URL code: {ShortUrlCode}", shortUrlCode);
 
         var urlData = await _urlStore.GetByShortUrlAsync(shortUrlCode);
 
@@ -108,7 +126,7 @@ public class UrlShortenerService : IUrlShortenerService
 
             _cache.Set(cacheKey, urlData.LongUrl, cacheEntryOptions);
 
-            _logger.LogInformation("Added to cache: {ShortUrlCode}", shortUrlCode);
+            _logger.LogDebug("Added to cache: {ShortUrlCode}", shortUrlCode);
         }
         else
         {

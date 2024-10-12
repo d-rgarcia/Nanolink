@@ -8,7 +8,7 @@ public interface IUrlShortenerService
     /// <param name="longUrl"></param>
     /// <returns></returns>
     Task<string> ShortenUrlAsync(string longUrl);
-    
+
     /// <summary>
     /// Gets the original URL from the shortened URL code.
     /// </summary>
