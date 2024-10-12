@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UrlShortener.CodeGenerator;
 using UrlShortener.ShortenerService;
+using UrlShortener.ShortenerService.Configuration;
 using UrlShortener.ShortenerService.Contracts;
 using UrlShortener.UrlStore;
 using UrlShortener.UrlStore.Contracts;
@@ -14,6 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
 builder.Services.Configure<CodeGeneratorOptions>(builder.Configuration.GetSection(CodeGeneratorOptions.ConfigurationSection));
+builder.Services.Configure<UrlShortenerServiceOptions>(builder.Configuration.GetSection(UrlShortenerServiceOptions.ConfigurationSection));
 
 builder.Services.AddDbContext<UrlStoreContext>(options =>
 {
@@ -21,7 +23,7 @@ builder.Services.AddDbContext<UrlStoreContext>(options =>
 });
 
 builder.Services.AddScoped<IUrlStore, UrlStoreContext>();
-
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ICodeGenerator, AlphanumericalGenerator>();
 builder.Services.AddScoped<IUrlShortenerService, UrlShortenerService>();
 

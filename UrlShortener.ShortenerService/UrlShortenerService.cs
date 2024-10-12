@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Retry;
 using UrlShortener.CodeGenerator;
+using UrlShortener.ShortenerService.Configuration;
 using UrlShortener.ShortenerService.Contracts;
 using UrlShortener.UrlStore.Contracts;
 using UrlShortener.UrlStore.Exceptions;
@@ -13,15 +16,22 @@ public class UrlShortenerService : IUrlShortenerService
 {
     private const int MaxRetryAttempts = 3;
     private const int RetryIntervalInMilliseconds = 500;
+    private const string ShortUrlCodeCacheKeyPrefix = "shortUrlCode:";
 
+
+    private readonly IMemoryCache _cache;
     private readonly IUrlStore _urlStore;
     private readonly ICodeGenerator _codeGenerator;
     private readonly ILogger<UrlShortenerService> _logger;
     private readonly AsyncRetryPolicy _retryPolicy;
-    public UrlShortenerService(IUrlStore urlStore, ICodeGenerator codeGenerator, ILogger<UrlShortenerService> logger)
+    private readonly UrlShortenerServiceOptions _options;
+
+    public UrlShortenerService(IUrlStore urlStore, ICodeGenerator codeGenerator, IMemoryCache cache, IOptions<UrlShortenerServiceOptions> options, ILogger<UrlShortenerService> logger)
     {
         _urlStore = urlStore;
         _codeGenerator = codeGenerator;
+        _cache = cache;
+        _options = options.Value;
         _logger = logger;
         _retryPolicy = Policy
             .Handle<DuplicateShortUrlException>()
@@ -31,55 +41,6 @@ public class UrlShortenerService : IUrlShortenerService
                 {
                     _logger.LogWarning(exception, "Retry {RetryCount} for generating short URL code at {TimeSpan}ms", retryCount, timeSpan.TotalMilliseconds);
                 });
-    }
-
-    /// <summary>
-    /// Gets the original URL from the shortened URL code.
-    /// </summary>
-    /// <param name="shortUrlCode"></param>
-    /// <returns></returns>
-    public async Task<Uri?> GetUrlAsync(string shortUrlCode)
-    {
-        ArgumentNullException.ThrowIfNull(shortUrlCode);
-
-        var urlData = await _urlStore.GetByShortUrlAsync(shortUrlCode);
-
-        if (urlData == null)
-            _logger.LogWarning("No long URL found for the given short URL code: {ShortUrlCode}", shortUrlCode);
-
-        return urlData?.LongUrl;
-    }
-
-    /// <summary>
-    /// Removes the URL from the store.
-    /// </summary>
-    /// <param name="shortUrlCode"></param>
-    /// <returns></returns>
-    public async Task<bool> RemoveUrlAsync(string shortUrlCode)
-    {
-        ArgumentNullException.ThrowIfNullOrEmpty(shortUrlCode);
-
-        var urlData = await _urlStore.GetByShortUrlAsync(shortUrlCode);
-
-        if (urlData == null)
-        {
-            _logger.LogWarning("Can not find the URL to remove for the short URL code: {ShortUrlCode}", shortUrlCode);
-
-            return false;
-        }
-
-        try
-        {
-            await _urlStore.RemoveAsync(urlData.Id);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error removing URL for the short URL code: {ShortUrlCode}", shortUrlCode);
-
-            return false;
-        }
     }
 
     /// <summary>
@@ -115,5 +76,81 @@ public class UrlShortenerService : IUrlShortenerService
         }
 
         return urlData.ShortUrlCode;
+    }
+    
+    /// <summary>
+    /// Gets the original URL from the shortened URL code.
+    /// </summary>
+    /// <param name="shortUrlCode"></param>
+    /// <returns></returns>
+    public async Task<Uri?> GetUrlAsync(string shortUrlCode)
+    {
+        ArgumentNullException.ThrowIfNull(shortUrlCode);
+
+        string cacheKey = $"{ShortUrlCodeCacheKeyPrefix}{shortUrlCode}";
+
+        if (_cache.TryGetValue(cacheKey, out Uri? longUrl))
+        {
+            _logger.LogInformation("Cache hit for short URL code: {ShortUrlCode}", shortUrlCode);
+            
+            return longUrl;
+        }
+
+        _logger.LogInformation("Cache miss for short URL code: {ShortUrlCode}", shortUrlCode);
+
+        var urlData = await _urlStore.GetByShortUrlAsync(shortUrlCode);
+
+        if (urlData != null)
+        {
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(_options.CacheSlidingExpiration)
+                .SetAbsoluteExpiration(_options.CacheAbsoluteExpiration);
+
+            _cache.Set(cacheKey, urlData.LongUrl, cacheEntryOptions);
+
+            _logger.LogInformation("Added to cache: {ShortUrlCode}", shortUrlCode);
+        }
+        else
+        {
+            _logger.LogWarning("No long URL found for the given short URL code: {ShortUrlCode}", shortUrlCode);
+        }
+
+        return urlData?.LongUrl;
+    }
+
+    /// <summary>
+    /// Removes the URL from the store.
+    /// </summary>
+    /// <param name="shortUrlCode"></param>
+    /// <returns></returns>
+    public async Task<bool> RemoveUrlAsync(string shortUrlCode)
+    {
+        ArgumentNullException.ThrowIfNullOrEmpty(shortUrlCode);
+
+        var urlData = await _urlStore.GetByShortUrlAsync(shortUrlCode);
+
+        if (urlData == null)
+        {
+            _logger.LogWarning("Can not find the URL to remove for the short URL code: {ShortUrlCode}", shortUrlCode);
+
+            return false;
+        }
+
+        try
+        {
+            string cacheKey = $"{ShortUrlCodeCacheKeyPrefix}{shortUrlCode}";
+
+            _cache.Remove(cacheKey);
+
+            await _urlStore.RemoveAsync(urlData.Id);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing URL for the short URL code: {ShortUrlCode}", shortUrlCode);
+
+            return false;
+        }
     }
 }
