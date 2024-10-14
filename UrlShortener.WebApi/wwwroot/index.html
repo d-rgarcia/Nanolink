@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nano link</title>
+</head>
+
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="mb-4">URL Shortener</h1>
+        <form id="urlForm">
+            <div class="mb-3">
+                <label for="longUrl" class="form-label">Enter your long URL:</label>
+                <input type="url" class="form-control" id="longUrl" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Shorten URL</button>
+        </form>
+        <div id="urlResult" class="mt-4 p-3 bg-white rounded shadow-sm d-none">
+            <h3 class="h5 mb-3">Shortened URL:</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="shortUrl" class="form-control" readonly>
+                        <button id="copyButton" class="btn btn-outline-success">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('urlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const longUrl = document.getElementById('longUrl').value;
+            const urlResultDiv = document.getElementById('urlResult');
+            const shortUrlInput = document.getElementById('shortUrl');
+
+            urlResultDiv.classList.add('d-none');
+
+            try {
+                const response = await fetch('/ShortenUrlAsync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(longUrl.toString()),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Response status not success.');
+                }
+
+                const shortUrl = await response.text();
+
+                if (shortUrl) {
+                    shortUrlInput.value = shortUrl;
+                    urlResultDiv.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while shortening the URL. Please try again. Error: ' + error);
+            }
+        });
+
+        document.getElementById('copyButton').addEventListener('click', () => {
+            const shortUrl = document.getElementById('shortUrl').value;
+            navigator.clipboard.writeText(shortUrl).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy the URL. Please try again. Error: ' + err);
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using UrlShortener.CodeGenerator;
 using UrlShortener.ShortenerService;
 using UrlShortener.ShortenerService.Configuration;
@@ -37,6 +38,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
+
 app.MapControllers();
 
 app.Run();

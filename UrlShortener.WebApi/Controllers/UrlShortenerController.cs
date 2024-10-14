@@ -51,7 +51,7 @@ public class UrlShortenerController : ControllerBase
         }
     }
 
-    [HttpGet("{shortUrlCode}")]
+    [HttpGet("{shortUrlCode:regex(^[[a-zA-Z0-9]]+$)}")]
     public async Task<IActionResult> RedirectTo(string shortUrlCode)
     {
         _logger.LogInformation("Redirecting to long URL for short URL code: {ShortUrlCode}", shortUrlCode);
