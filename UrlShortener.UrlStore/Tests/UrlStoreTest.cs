@@ -103,4 +103,42 @@ public class UrlStoreTest : UrlStoreTestBase
 
         await Assert.ThrowsAsync<DuplicateShortUrlException>(() => urlStore.AddAsync(secondUrl));
     }
+
+    [Fact]
+    public async Task CleanOldUrls_OlderThanGiven_RemovesMatchedUrls()
+    {
+        var young = new UrlData
+        {
+            LongUrl = new Uri("https://www.google.com"),
+            ShortUrlCode = "young",
+            LastAccessedAt = DateTime.UtcNow
+        };
+        var oldUrl1 = new UrlData
+        {
+            LongUrl = new Uri("https://www.yahoo.com"),
+            ShortUrlCode = "oldman",
+            LastAccessedAt = DateTime.UtcNow.AddDays(-90)
+        };
+        var oldUrl2 = new UrlData
+        {
+            LongUrl = new Uri("https://www.bing.com"),
+            ShortUrlCode = "oldman2",
+            LastAccessedAt = DateTime.UtcNow.AddDays(-30)
+        };
+        
+        using var urlStore = new UrlStoreContext(_contextOptions, _logger);
+
+        urlStore.Add(young);
+        urlStore.Add(oldUrl1);
+        urlStore.Add(oldUrl2);
+
+        urlStore.SaveChanges();
+
+        int count = await urlStore.CleanOldUrls(DateTime.UtcNow.AddDays(-30));
+
+        Assert.NotNull(await urlStore.GetByShortUrlAsync(young.ShortUrlCode));
+        Assert.Null(await urlStore.GetByShortUrlAsync(oldUrl1.ShortUrlCode));
+        Assert.Null(await urlStore.GetByShortUrlAsync(oldUrl1.ShortUrlCode));
+        Assert.Equal(2, count);
+    }
 }

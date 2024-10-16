@@ -113,6 +113,7 @@ public class UrlStoreContext : DbContext, IUrlStore
                 throw new DuplicateShortUrlException($"Short URL '{urlData.ShortUrlCode}' already exists");
 
             urlData.CreatedAt = DateTime.UtcNow;
+            urlData.LastAccessedAt = DateTime.UtcNow;
 
             await Urls.AddAsync(urlData);
 
@@ -159,5 +160,21 @@ public class UrlStoreContext : DbContext, IUrlStore
 
             _logger.LogInformation("{OperationName} took {ElapsedMilliseconds}ms", operationName, stopwatch.ElapsedMilliseconds);
         }
+    }
+
+    public async Task<int> CleanOldUrls(DateTime olderThan)
+    {
+        return await ExecuteAsync(nameof(CleanOldUrls), async () =>
+        {
+            _logger.LogDebug($"Cleaning urls older than: {olderThan}");
+
+            var olderUrls = Urls.Where(u => u.LastAccessedAt < olderThan).ToList();
+
+            Urls.RemoveRange(olderUrls);
+
+            await SaveChangesAsync();
+
+            return olderUrls.Count;
+        });
     }
 }

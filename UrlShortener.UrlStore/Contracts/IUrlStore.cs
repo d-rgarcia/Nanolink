@@ -40,4 +40,11 @@ public interface IUrlStore
     /// </summary>
     /// <param name="urlId">The ID of the URL to remove.</param>
     Task RemoveAsync(Guid urlId);
+
+    /// <summary>
+    /// Removes the URLs older than the DateTime in UTC specified as input.
+    /// </summary>
+    /// <param name="olderThan"></param>
+    /// <returns></returns>
+    Task<int> CleanOldUrls(DateTime olderThan);
 }
