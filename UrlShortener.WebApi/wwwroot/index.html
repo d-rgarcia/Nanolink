@@ -1,107 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <link rel="stylesheet" href="./css/bootstrap.min.css">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Nano link</title>
-    </head>
-    <body class="bg-light">
-        <div class="container py-5">
-            <h1 class="mb-4">URL Shortener</h1>
-            
-            <form id="urlForm">
-                <div class="mb-3">
-                    <label for="longUrl" class="form-label">Enter your long URL:</label>
-                    <input type="url" class="form-control" id="longUrl" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Shorten URL</button>
-                <button id="clearButton" type="button" class="btn btn-secondary">Clear</button>
-            </form>
-            
-            <div id="loadingSpinner" class="spinner-border text-primary d-none mt-3" role="status">
-                <span class="visually-hidden">Loading...</span>
+
+<head>
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nano link</title>
+</head>
+
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="mb-4">URL Shortener</h1>
+
+        <form id="urlForm">
+            <div class="mb-3">
+                <label for="longUrl" class="form-label">Enter your long URL:</label>
+                <input type="url" class="form-control" id="longUrl" required>
             </div>
-            
-            <div id="errorMessage" class="mt-2 alert alert-danger d-none"></div>
-            
-            <div id="urlResult" class="mt-4 p-3 bg-white rounded shadow-sm d-none">
-                <h3 class="h5 mb-3">Shortened URL:</h3>
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="input-group">
-                            <input type="text" id="shortUrl" class="form-control" readonly>
-                            <button type="button" id="copyButton" class="btn btn-outline-success" aria-label="Copy shortened URL">Copy</button>
-                        </div>
-                        <div id="copySuccess" class="mt-2 alert alert-success d-none">URL Copied!</div>
+            <button type="submit" class="btn btn-primary">Shorten URL</button>
+            <button id="clearButton" type="button" class="btn btn-secondary">Clear</button>
+        </form>
+
+        <div id="loadingSpinner" class="spinner-border text-primary d-none mt-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+
+        <div id="errorMessage" class="mt-2 alert alert-danger d-none"></div>
+
+        <div id="urlResult" class="mt-4 p-3 bg-white rounded shadow-sm d-none">
+            <h3 class="h5 mb-3">Shortened URL:</h3>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" id="shortUrl" class="form-control" readonly>
+                        <button type="button" id="copyButton" class="btn btn-outline-success"
+                            aria-label="Copy shortened URL">Copy</button>
                     </div>
+                    <div id="copySuccess" class="mt-2 alert alert-success d-none">URL Copied!</div>
                 </div>
             </div>
         </div>
-        <script src="./js/bootstrap.bundle.min.js"></script>
-        <script>
-            const urlForm = document.getElementById('urlForm');
-            const longUrlInput = document.getElementById('longUrl');
-            const shortUrlInput = document.getElementById('shortUrl');
-            const urlResultDiv = document.getElementById('urlResult');
-            const copyButton = document.getElementById('copyButton');
-            const copySuccess = document.getElementById('copySuccess');
-            const clearButton = document.getElementById('clearButton');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const errorMessage = document.getElementById('errorMessage');
 
-            urlForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+        <div id="urlHistory" class="mt-4 d-none">
+            <h3 class="mb-3">Shortened URL history:</h3>
+            <ul id="historyList" class="list-group"></ul>
+        </div>
+    </div>
+    <script src="./js/bootstrap.bundle.min.js"></script>
+    <script>
+        const urlForm = document.getElementById('urlForm');
+        const longUrlInput = document.getElementById('longUrl');
+        const shortUrlInput = document.getElementById('shortUrl');
+        const urlResultDiv = document.getElementById('urlResult');
+        const copyButton = document.getElementById('copyButton');
+        const copySuccess = document.getElementById('copySuccess');
+        const clearButton = document.getElementById('clearButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorMessage = document.getElementById('errorMessage');
+        const urlHistory = document.getElementById('urlHistory');
+        const urlList = document.getElementById('historyList');
+        urlForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                urlResultDiv.classList.add('d-none');
-                errorMessage.classList.add('d-none');
-                loadingSpinner.classList.remove('d-none');
+            urlResultDiv.classList.add('d-none');
+            errorMessage.classList.add('d-none');
+            loadingSpinner.classList.remove('d-none');
 
-                try {
-                    const response = await fetch('/ShortenUrlAsync', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(longUrlInput.value.toString()),
+            try {
+                const response = await fetch('/ShortenUrlAsync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(longUrlInput.value.toString()),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to shorten URL.');
+                }
+
+                const shortUrl = await response.text();
+
+                if (shortUrl) {
+                    shortUrlInput.value = shortUrl;
+                    urlResultDiv.classList.remove('d-none');
+                    saveToLocal(shortUrl);
+                }
+            } catch (error) {
+                errorMessage.innerText = 'An error occurred: ' + error.message;
+                errorMessage.classList.remove('d-none');
+            }
+            finally {
+                loadingSpinner.classList.add('d-none');
+            }
+        });
+
+        clearButton.addEventListener('click', () => {
+            longUrlInput.value = '';
+            urlResultDiv.classList.add('d-none');
+            errorMessage.classList.add('d-none');
+        });
+
+        copyButton.addEventListener('click', () => {
+            const shortUrl = shortUrlInput.value;
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                copySuccess.classList.remove('d-none');
+                setTimeout(() => {
+                    copySuccess.classList.add('d-none');
+                }, 1000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy the URL. Please try again. Error: ' + err);
+            });
+        });
+
+        showHistory();
+
+        function showHistory() {
+            const urlList = JSON.parse(localStorage.getItem('shortUrls')) || [];
+            if (urlList.length > 0) {
+                urlHistory.classList.remove('d-none');
+                historyList.innerHTML = '';
+                urlList.forEach((url, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                    const urlText = document.createElement('span');
+                    urlText.textContent = url;
+
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'btn btn-outline-success btn-sm';
+                    copyButton.textContent = 'Copy';
+                    copyButton.setAttribute('aria-label', `Copy URL ${index + 1}`);
+
+                    copyButton.addEventListener('click', () => {
+                        navigator.clipboard.writeText(url).then(() => {
+                            let tooltip = new bootstrap.Tooltip(copyButton, {
+                                title: 'URL Copied!',
+                                trigger: 'manual',
+                                placement: 'top'
+                            });
+
+                            // Mostrar el tooltip
+                            tooltip.show();
+
+                            // Ocultar después de 1 segundo
+                            setTimeout(() => {
+                                tooltip.hide();
+                            }, 1000);
+                        }).catch(err => {
+                            console.error('Failed to copy: ', err);
+                            alert('Failed to copy the URL. Please try again. Error: ' + err);
+                        });
                     });
 
-                    if (!response.ok) {
-                        throw new Error('Failed to shorten URL.');
-                    }
-
-                    const shortUrl = await response.text();
-
-                    if (shortUrl) {
-                        shortUrlInput.value = shortUrl;
-                        urlResultDiv.classList.remove('d-none');
-                    }
-                } catch (error) {
-                    errorMessage.innerText = 'An error occurred: ' + error.message;
-                    errorMessage.classList.remove('d-none');
-                }
-                finally {
-                    loadingSpinner.classList.add('d-none');
-                }
-            });
-
-            clearButton.addEventListener('click', () => {
-                longUrlInput.value = '';
-                urlResultDiv.classList.add('d-none');
-                errorMessage.classList.add('d-none');
-            });
-
-            copyButton.addEventListener('click', () => {
-                const shortUrl = shortUrlInput.value;
-                navigator.clipboard.writeText(shortUrl).then(() => {
-                    copySuccess.classList.remove('d-none');
-                    setTimeout(() => {
-                        copySuccess.classList.add('d-none');
-                    }, 1000);
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                    alert('Failed to copy the URL. Please try again. Error: ' + err);
+                    listItem.appendChild(urlText);
+                    listItem.appendChild(copyButton);
+                    historyList.appendChild(listItem);
                 });
-            });
-        </script>
-    </body>
+            }
+        }
+
+        function saveToLocal(shortUrl) {
+            let urlList = JSON.parse(localStorage.getItem('shortUrls')) || [];
+            if (urlList.indexOf(shortUrl) === -1) {
+                urlList.push(shortUrl);
+                localStorage.setItem('shortUrls', JSON.stringify(urlList));
+                showHistory();
+            }
+        }
+    </script>
+</body>
+
 </html>
