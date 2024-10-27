@@ -1,3 +1,4 @@
 [Oo]bj/
 [Bb]in/
 *.log
+Deploy/deploy.sh
