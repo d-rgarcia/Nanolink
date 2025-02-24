@@ -8,6 +8,6 @@ services:
         environment:
             - ASPNETCORE_ENVIRONMENT=Production
             - ASPNETCORE_URLS=http://0.0.0.0:8080
-            - ConnectionStrings__UrlStoreConnection=Server=192.168.1.68;Port=5432;User Id=postgres;Password=Admin123;Database=UrlStoreDb;
+            - ConnectionStrings__UrlStoreConnection=Server=192.168.1.60;Port=5432;User Id=postgres;Password=Admin123;Database=UrlStoreDb;
         ports:
             - 8081:8080

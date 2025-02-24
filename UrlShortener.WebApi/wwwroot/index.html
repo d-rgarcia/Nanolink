@@ -116,22 +116,39 @@
         showHistory();
 
         function showHistory() {
+
             const urlList = JSON.parse(localStorage.getItem('shortUrls')) || [];
+
             if (urlList.length > 0) {
+
                 urlHistory.classList.remove('d-none');
                 historyList.innerHTML = '';
-                urlList.forEach((url, index) => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-                    const urlText = document.createElement('span');
+                urlList.forEach((url, index) => {
+
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item';
+
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'd-flex justify-content-between align-items-center flex-wrap';
+
+                    const urlTextDiv = document.createElement('div');
+                    urlTextDiv.className = 'flex-grow-1 text-nowrap overflow-auto px-2 border rounded bg-light';
+                    urlTextDiv.style.maxWidth = "calc(100% - 80px)"; // For button not to jump to next line.
+                    urlTextDiv.style.whiteSpace = "nowrap"; // Not jumping to next line.
+
+                    const urlText = document.createElement('a');
                     urlText.textContent = url;
+                    urlText.href = url;
+                    urlTextDiv.appendChild(urlText);
+
+                    const buttonDiv = document.createElement('div');
+                    buttonDiv.className = 'ms-2 flex-shrink-0';
 
                     const copyButton = document.createElement('button');
                     copyButton.className = 'btn btn-outline-success btn-sm';
                     copyButton.textContent = 'Copy';
                     copyButton.setAttribute('aria-label', `Copy URL ${index + 1}`);
-
                     copyButton.addEventListener('click', () => {
                         navigator.clipboard.writeText(url).then(() => {
                             let tooltip = new bootstrap.Tooltip(copyButton, {
@@ -140,21 +157,20 @@
                                 placement: 'top'
                             });
 
-                            // Mostrar el tooltip
+                            // Show the tooltip 
                             tooltip.show();
-
-                            // Ocultar después de 1 segundo
-                            setTimeout(() => {
-                                tooltip.hide();
-                            }, 1000);
+                            // Hide after 1 second 
+                            setTimeout(() => tooltip.hide(), 1000);
+                            
                         }).catch(err => {
                             console.error('Failed to copy: ', err);
-                            alert('Failed to copy the URL. Please try again. Error: ' + err);
+                            alert('Failed to copy the URL. Please try again.');
                         });
                     });
-
-                    listItem.appendChild(urlText);
-                    listItem.appendChild(copyButton);
+                    buttonDiv.appendChild(copyButton);
+                    rowDiv.appendChild(urlTextDiv);
+                    rowDiv.appendChild(buttonDiv);
+                    listItem.appendChild(rowDiv);
                     historyList.appendChild(listItem);
                 });
             }
@@ -163,7 +179,8 @@
         function saveToLocal(shortUrl) {
             let urlList = JSON.parse(localStorage.getItem('shortUrls')) || [];
             if (urlList.indexOf(shortUrl) === -1) {
-                urlList.push(shortUrl);
+                // unshift / push - add an element to the beginning / end of an array
+                urlList.unshift(shortUrl);
                 localStorage.setItem('shortUrls', JSON.stringify(urlList));
                 showHistory();
             }

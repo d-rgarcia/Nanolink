@@ -2,3 +2,4 @@
 [Bb]in/
 *.log
 Deploy/deploy.sh
+Deploy/deploy.ps1
