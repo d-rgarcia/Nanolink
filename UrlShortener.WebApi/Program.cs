@@ -9,8 +9,18 @@ using UrlShortener.UrlStore.Contracts;
 using Serilog;
 using UrlShortener.WebApi.Options;
 using Quartz;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if(!builder.Environment.IsDevelopment())
+{
+    var vaultUrl = builder.Configuration["VaultUrl"];
+    if(!string.IsNullOrEmpty(vaultUrl))
+    {
+        builder.Configuration.AddAzureKeyVault(new Uri(vaultUrl), new DefaultAzureCredential());
+    }
+}
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
